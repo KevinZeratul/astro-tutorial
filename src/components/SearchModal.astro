@@ -1,0 +1,346 @@
+---
+---
+
+<button id="search-toggle" aria-label="Search" title="Search (Ctrl+K)">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="11" cy="11" r="8"/>
+    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+  </svg>
+</button>
+
+<div id="search-panel" class="search-panel" hidden>
+  <div class="search-modal">
+    <div class="search-input-row">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="search-input-icon">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input
+        type="text"
+        id="search-modal-input"
+        placeholder="Search posts... (Ctrl+K)"
+        autocomplete="off"
+      />
+      <kbd class="search-esc-hint">Esc</kbd>
+    </div>
+    <div id="search-modal-results"></div>
+  </div>
+</div>
+
+<style>
+  #search-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    color: var(--color-text-muted);
+    transition: background-color var(--transition), color var(--transition);
+  }
+
+  #search-toggle:hover {
+    background-color: var(--color-bg-alt);
+    color: var(--color-accent);
+  }
+
+  .search-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 12vh;
+  }
+
+  .search-panel[hidden] {
+    display: none;
+  }
+
+  .search-modal {
+    position: relative;
+    width: 100%;
+    max-width: 540px;
+    max-height: 72vh;
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.13);
+    display: flex;
+    flex-direction: column;
+    margin: 0 1rem;
+    overflow: hidden;
+  }
+
+  .search-input-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 1rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .search-input-icon {
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+  }
+
+  #search-modal-input {
+    flex: 1;
+    padding: 0.9rem 0;
+    font-size: 1.05rem;
+    font-family: inherit;
+    border: 0;
+    background: transparent;
+    color: var(--color-text);
+    outline: none;
+  }
+
+  .search-esc-hint {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    padding: 0.2em 0.5em;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+  }
+
+  #search-modal-results {
+    overflow-y: auto;
+    flex: 1;
+    padding: 0.25rem 0;
+  }
+
+  .smr-empty {
+    text-align: center;
+    color: var(--color-text-muted);
+    padding: 2.5rem 1rem;
+    font-size: 0.88rem;
+  }
+
+  .search-modal-result {
+    display: block;
+    padding: 0.85rem 1.25rem;
+    text-decoration: none;
+    border-bottom: 1px solid var(--color-border);
+    transition: background var(--transition);
+  }
+
+  .search-modal-result:last-child {
+    border-bottom: 0;
+  }
+
+  .search-modal-result:hover {
+    background: var(--color-bg-alt);
+    text-decoration: none;
+  }
+
+  .smr-title {
+    font-weight: 700;
+    color: var(--color-text);
+    font-size: 0.95rem;
+    line-height: 1.4;
+  }
+
+  .smr-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+  }
+
+  .smr-meta .smr-cat,
+  .smr-meta .smr-tag {
+    display: inline-block;
+    padding: 0.08em 0.45em;
+    border-radius: 3px;
+    font-size: 0.78rem;
+  }
+
+  .smr-meta .smr-cat {
+    background: var(--color-bg-alt);
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+
+  .smr-meta .smr-tag {
+    background: var(--color-bg-alt);
+    color: var(--color-text-muted);
+  }
+
+  .smr-snippet {
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+    margin-top: 0.35rem;
+    line-height: 1.55;
+  }
+
+  /* Highlight styles */
+  mark {
+    background: var(--color-accent);
+    color: #fff;
+    padding: 0.05em 0.2em;
+    border-radius: 2px;
+  }
+</style>
+
+<script is:inline>
+  (function() {
+    const toggle = document.getElementById('search-toggle');
+    const panel = document.getElementById('search-panel');
+    const modal = panel.querySelector('.search-modal');
+    const input = document.getElementById('search-modal-input');
+    const results = document.getElementById('search-modal-results');
+    let posts = [];
+    let loaded = false;
+    let timer;
+
+    function score(query, text) {
+      if (!text || !query) return 0;
+      const t = text.toLowerCase();
+      const q = query.toLowerCase();
+      if (t === q) return 100;
+      if (t.startsWith(q)) return 80;
+      if (t.includes(q)) return 60;
+      let qi = 0;
+      for (let i = 0; i < t.length && qi < q.length; i++) {
+        if (t[i] === q[qi]) qi++;
+      }
+      return qi === q.length ? 30 : 0;
+    }
+
+    // Build an array of query words (split by space)
+    function getQueryWords(q) {
+      return q.toLowerCase().split(/\s+/).filter(Boolean);
+    }
+
+    function highlight(text, query) {
+      if (!text || !query) return text;
+      const words = getQueryWords(query);
+      if (!words.length) return text;
+      const pattern = words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+      return text.replace(new RegExp(`(${pattern})`, 'gi'), '<mark>$1</mark>');
+    }
+
+    function extractSnippet(body, query) {
+      if (!body || !query) return '';
+      const words = getQueryWords(query);
+      if (!words.length) return body.slice(0, 150);
+
+      // Find the earliest match position across all query words
+      const lower = body.toLowerCase();
+      let bestIdx = -1;
+      for (const w of words) {
+        const idx = lower.indexOf(w);
+        if (idx !== -1 && (bestIdx === -1 || idx < bestIdx)) bestIdx = idx;
+      }
+
+      if (bestIdx === -1) return body.slice(0, 150);
+
+      // Extract ~40 chars before and ~80 chars after the match
+      const SNIPPET_BEFORE = 40;
+      const SNIPPET_AFTER = 80;
+      const start = Math.max(0, bestIdx - SNIPPET_BEFORE);
+      const end = Math.min(body.length, bestIdx + SNIPPET_AFTER);
+      let snippet = '';
+      if (start > 0) snippet += '...';
+      snippet += body.slice(start, end);
+      if (end < body.length) snippet += '...';
+      return snippet;
+    }
+
+    function search(query) {
+      if (!query.trim()) { results.innerHTML = ''; return; }
+      if (!posts.length) {
+        results.innerHTML = '<p class="smr-empty">Loading search data...</p>';
+        return;
+      }
+
+      const scored = posts.map(post => {
+        let s = 0;
+        s += score(query, post.title) * 5;
+        s += score(query, post.category) * 4;
+        post.tags.forEach(tag => { s += score(query, tag) * 3; });
+        s += score(query, post.description) * 2;
+        s += score(query, post.bodyText) * 1;
+        return { post, score: s };
+      });
+
+      const matched = scored
+        .filter(item => item.score > 0)
+        .sort((a, b) => b.score - a.score);
+
+      if (!matched.length) {
+        results.innerHTML = '<p class="smr-empty">No results found for "' + query + '"</p>';
+        return;
+      }
+
+      results.innerHTML = matched.map(({ post }) => {
+        const snippet = extractSnippet(post.bodyText, query);
+        const dateStr = post.pubDate ? new Date(post.pubDate).toLocaleDateString('zh-CN', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+
+        return `
+        <a class="search-modal-result" href="${post.url}">
+          <div class="smr-title">${highlight(post.title, query)}</div>
+          <div class="smr-meta">
+            ${dateStr ? `<span>${dateStr}</span>` : ''}
+            ${post.category ? `<span class="smr-cat">${highlight(post.category, query)}</span>` : ''}
+            ${post.tags && post.tags.length ? post.tags.map(t => `<span class="smr-tag">${highlight(t, query)}</span>`).join('') : ''}
+          </div>
+          ${snippet ? `<div class="smr-snippet">${highlight(snippet, query)}</div>` : ''}
+        </a>`;
+      }).join('');
+    }
+
+    function open() {
+      if (!loaded) {
+        fetch('/search-index.json')
+          .then(r => r.json())
+          .then(data => { posts = data; loaded = true; })
+          .catch(() => { results.innerHTML = '<p class="smr-empty">Search index not available.</p>'; });
+      }
+      panel.hidden = false;
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => input.focus(), 80);
+    }
+
+    function close() {
+      panel.hidden = true;
+      document.body.style.overflow = '';
+      input.value = '';
+      results.innerHTML = '';
+    }
+
+    toggle.addEventListener('click', open);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !panel.hidden) { close(); input.blur(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); open(); }
+    });
+
+    // Click outside modal to close
+    document.addEventListener('click', (e) => {
+      if (!panel.hidden) {
+        if (!modal.contains(e.target) && e.target !== toggle) {
+          close();
+        }
+      }
+    });
+
+    input.addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => search(input.value), 200);
+    });
+
+    // Close on clicking a result link
+    results.addEventListener('click', (e) => {
+      if (e.target.closest('a')) close();
+    });
+  })();
+</script>

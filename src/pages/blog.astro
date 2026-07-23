@@ -1,25 +1,24 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import BlogPost from '../components/BlogPost.astro';
+import BlogList from '../components/BlogList.astro';
+import { estimateReadingTime } from '../utils/readingTime';
+
+const POSTS_PER_PAGE = 5;
+
 const allPosts = Object.values(import.meta.glob('./posts/*.md', { eager: true }));
-const pageTitle = "My Blogs";
+const sortedPosts = allPosts
+  .map((post: any) => ({
+    ...post,
+    readingTime: estimateReadingTime(post.frontmatter.description),
+  }))
+  .sort((a: any, b: any) => new Date(b.frontmatter.pubDate).getTime() - new Date(a.frontmatter.pubDate).getTime());
+
+const totalPages = Math.ceil(sortedPosts.length / POSTS_PER_PAGE);
+const pagePosts = sortedPosts.slice(0, POSTS_PER_PAGE);
+const pageTitle = "Blogs";
 ---
 
 <BaseLayout pageTitle={pageTitle}>
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>{pageTitle}</title>
-	</head>
-    <body>
-        <p>This is my blog page</p>
-        <ul>
-            {allPosts.map((post: any) => <BlogPost url={post.url} title={post.frontmatter.title} />)}
-        </ul>
-    </body>
-</html>
+  <p style="color:var(--color-text-muted);margin-bottom:1.5rem;">{sortedPosts.length} posts written</p>
+  <BlogList posts={pagePosts} currentPage={1} totalPages={totalPages} baseUrl="/blog/" />
 </BaseLayout>

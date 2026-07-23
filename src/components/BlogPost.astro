@@ -1,5 +1,29 @@
 ---
-const {title, url} = Astro.props;
+const { url, title, pubDate, description, tags, category, readingTime } = Astro.props;
 ---
 
-<li><a href={url}>{title}</a></li>
+<a class="post-card" href={url}>
+  <p class="post-title">{title}</p>
+  <div class="post-meta">
+    {pubDate && <span>{new Date(pubDate).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}</span>}
+    {readingTime && <span>· {readingTime} min read</span>}
+    {category && <span>· <span class="post-category">{category}</span></span>}
+  </div>
+  {description && <p class="post-desc">{description}</p>}
+  {tags && tags.length > 0 && (
+    <div class="post-tags">
+      {tags.map((tag: string) => <span class="tag">{tag}</span>)}
+    </div>
+  )}
+</a>
+
+<style>
+  .post-category {
+    background: var(--color-bg-alt);
+    color: var(--color-accent);
+    padding: 0.1em 0.5em;
+    border-radius: 3px;
+    font-weight: 600;
+    font-size: 0.88em;
+  }
+</style>

@@ -1,0 +1,87 @@
+---
+import BlogPost from './BlogPost.astro';
+
+const { posts, currentPage, totalPages, baseUrl } = Astro.props;
+---
+
+<div class="post-list">
+  {posts.map((post: any) => (
+    <BlogPost
+      url={post.url}
+      title={post.frontmatter?.title || post.title}
+      pubDate={post.frontmatter?.pubDate || post.pubDate}
+      description={post.frontmatter?.description || post.description}
+      tags={post.frontmatter?.tags || post.tags}
+      category={post.frontmatter?.category || post.category}
+      readingTime={post.readingTime}
+    />
+  ))}
+</div>
+
+{totalPages > 1 && (
+  <nav class="pagination">
+    {currentPage > 1 && (
+      <a href={currentPage === 2 ? baseUrl : `${baseUrl}${currentPage - 1}/`} class="pag-link pag-prev">← Previous</a>
+    )}
+    <div class="pag-numbers">
+      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+        page === currentPage
+          ? <span class="pag-link pag-current">{page}</span>
+          : <a href={page === 1 ? baseUrl : `${baseUrl}${page}/`} class="pag-link">{page}</a>
+      ))}
+    </div>
+    {currentPage < totalPages && (
+      <a href={`${baseUrl}${currentPage + 1}/`} class="pag-link pag-next">Next →</a>
+    )}
+  </nav>
+)}
+
+<style>
+  .pagination {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .pag-numbers {
+    display: flex;
+    gap: 0.3rem;
+  }
+
+  .pag-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.2rem;
+    height: 2.2rem;
+    padding: 0 0.5rem;
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+    background: var(--color-card-bg);
+    transition: all var(--transition);
+    text-decoration: none;
+  }
+
+  .pag-link:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .pag-current {
+    background: var(--color-accent);
+    color: #fff;
+    border-color: var(--color-accent);
+  }
+
+  .pag-prev, .pag-next {
+    padding: 0 1rem;
+  }
+</style>

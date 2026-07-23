@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import BlogPost from '../../components/BlogPost.astro';
+import { estimateReadingTime } from '../../utils/readingTime';
 
 export async function getStaticPaths() {
     const allPosts = Object.values(import.meta.glob('../posts/*.md', { eager: true }));
@@ -17,10 +18,26 @@ export async function getStaticPaths() {
 
 const { tag } = Astro.params;
 const { posts } = Astro.props;
+
+const postsWithMeta = posts.map((post: any) => ({
+  ...post,
+  readingTime: estimateReadingTime(post.frontmatter.description),
+}));
 ---
 <BaseLayout pageTitle={tag}>
-  <p>包含「{tag}」标签的文章</p>
-  <ul>
-    {posts.map((post: any) => <BlogPost url={post.url} title={post.frontmatter.title}/>)}
-  </ul>
+  <a href="/tags/" class="back-link">← All Tags</a>
+  <p>Posts tagged with 「{tag}」({postsWithMeta.length})</p>
+  <div class="post-list">
+    {postsWithMeta.map((post: any) => (
+      <BlogPost
+        url={post.url}
+        title={post.frontmatter.title}
+        pubDate={post.frontmatter.pubDate}
+        description={post.frontmatter.description}
+        tags={post.frontmatter.tags}
+        category={post.frontmatter.category}
+        readingTime={post.readingTime}
+      />
+    ))}
+  </div>
 </BaseLayout>

@@ -1,17 +1,49 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Greeting from '../components/Greeting';
+import BlogPost from '../components/BlogPost.astro';
+import Sidebar from '../components/Sidebar.astro';
+import { estimateReadingTime } from '../utils/readingTime';
 
-const pageTitle = "Hello Astro Index Page";
-const happy = true;
-const finished = true;
-const goal = 3;
+const pageTitle = "KevinZeratul's Dairy WasteBin";
+
+const allPosts = Object.values(import.meta.glob('./posts/*.md', { eager: true }));
+const recentPosts = allPosts
+  .map((post: any) => ({
+    ...post,
+    readingTime: estimateReadingTime(post.frontmatter.description),
+  }))
+  .sort((a: any, b: any) => new Date(b.frontmatter.pubDate).getTime() - new Date(a.frontmatter.pubDate).getTime())
+  .slice(0, 5);
 ---
-<BaseLayout pageTitle={pageTitle}>
 
-    <Greeting client:load messages={["Hej", "Hallo", "Hola", "Habari"]} />
+<BaseLayout pageTitle={pageTitle} wide={true}>
+  <div class="home-layout">
+    <div class="home-main">
+      <section class="hero">
+        <h1>Welcome to KevinZeratul Personal Blog</h1>
+        <p class="hero-subtitle">
+          A developer's build log and emotion wastebin — documenting projects, learning journeys, and random thoughts along the way.
+        </p>
+      </section>
 
-    {happy && <p>I am happy to be learning Astro!</p>}
-    {finished ? <p>I finished this tutorial!</p> : <p>I just not finished this  tutorial.</p>}
-    {goal === 3 ? <p>My goal is to finish in 3 days.</p> : <p>My goal is to finish in {goal} days.</p>}
+      <h2 class="section-title">Recent Posts</h2>
+      <div class="post-list">
+        {recentPosts.map((post: any) => (
+          <BlogPost
+            url={post.url}
+            title={post.frontmatter.title}
+            pubDate={post.frontmatter.pubDate}
+            description={post.frontmatter.description}
+            tags={post.frontmatter.tags}
+            category={post.frontmatter.category}
+            // readingTime={post.readingTime}
+          />
+        ))}
+      </div>
+
+      {recentPosts.length === 0 && <p style="text-align:center;color:var(--color-text-muted);">No posts yet — check back soon!</p>}
+    </div>
+
+    <Sidebar />
+  </div>
 </BaseLayout>

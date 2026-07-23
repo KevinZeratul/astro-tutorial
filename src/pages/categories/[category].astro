@@ -1,0 +1,43 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import BlogPost from '../../components/BlogPost.astro';
+import { estimateReadingTime } from '../../utils/readingTime';
+
+export async function getStaticPaths() {
+  const allPosts = Object.values(import.meta.glob('../posts/*.md', { eager: true }));
+  const categories = [...new Set(allPosts.map((post: any) => post.frontmatter.category || 'uncategorized'))];
+  return categories.map((cat) => ({
+    params: { category: cat },
+    props: { category: cat },
+  }));
+}
+
+const { category } = Astro.params;
+
+const allPosts = Object.values(import.meta.glob('../posts/*.md', { eager: true }));
+const filteredPosts = allPosts
+  .filter((post: any) => (post.frontmatter.category || 'uncategorized') === category)
+  .map((post: any) => ({
+    ...post,
+    readingTime: estimateReadingTime(post.frontmatter.description),
+  }))
+  .sort((a: any, b: any) => new Date(b.frontmatter.pubDate).getTime() - new Date(a.frontmatter.pubDate).getTime());
+---
+
+<BaseLayout pageTitle={category}>
+  <a href="/categories/" class="back-link">← All Categories</a>
+  <p>Category: 「{category}」({filteredPosts.length} posts)</p>
+  <div class="post-list">
+    {filteredPosts.map((post: any) => (
+      <BlogPost
+        url={post.url}
+        title={post.frontmatter.title}
+        pubDate={post.frontmatter.pubDate}
+        description={post.frontmatter.description}
+        tags={post.frontmatter.tags}
+        category={post.frontmatter.category}
+        readingTime={post.readingTime}
+      />
+    ))}
+  </div>
+</BaseLayout>

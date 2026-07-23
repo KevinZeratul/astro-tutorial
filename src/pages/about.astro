@@ -2,46 +2,40 @@
 const pageTitle = "About Me";
 
 const identity = {
-  firstName: "Sarah",
-  country: "Canada",
-  occupation: "Technical Writer",
-  hobbies: ["photography", "birdwatching", "baseball"],
+  firstName: "Kevin",
+  country: "China",
+  occupation: "Developer",
+  hobbies: ["coding", "reading", "gaming"],
 };
-
-const skills = ["HTML", "CSS", "JavaScript", "React", "Astro", "Writing Docs"];
-
+const selfProfile = [
+    "技术栈：多少懂点前后端，曾经的TF Boy(TensorFlow Boy)",
+    "游戏：永劫无间，守望先锋，王者荣耀，Speed Runner，Tiny Rouges...... LOL&Dota云玩家",
+    "影视：影视飓风，赛博丁真，游戏人生零，碧蓝之海，八仙，雨世界",
+    "游泳，干饭，荡马路，"
+];
+const plans = [
+    "学点硬件相关，做些小玩意儿",
+    "学点金融，早日实现财富自由，专注的聚焦人生愿景"
+];
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 <BaseLayout pageTitle={pageTitle}>
-    <html lang="en">
-        <head>
-            <meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>{pageTitle}</title>
-        </head>
-        <body>
-            <h2>... and my new Astro site!</h2>
+    <h2>About Me and This Site</h2>
 
-            <p>I am working through Astro's introductory tutorial. This is the second page on my website, and it's the first one I built myself!</p>
-
-            <p>This site will update as I complete more of the tutorial, so keep checking back and see how my journey is going!</p>
-
-            <p>Here are a few facts about me:</p>
-            <ul>
-                <li>My name is {identity.firstName}.</li>
-                <li>I live in {identity.country} and I work as a {identity.occupation}.</li>
-                {identity.hobbies.length >= 2 &&
-                <li>Two of my hobbies are: {identity.hobbies[0]} and {identity.hobbies[1]}</li>
-                }
-            </ul>
-            <p>My skills are:</p>
-            <ul>
-                {skills.map((skill) => <li>{skill}</li>)}
-            </ul>
-            
-        </body>
-    </html>
+    <p>关于本站：</p>
+    <p>这个Blog最初起源于Astro的官方教程</p>
+    <p>本着写都写了不用浪费的想法，将这里作为见闻心得，随想笔记，Build Log，情绪垃圾桶记录站</p>
+   
+    <p>关于我：</p>
+    <p>热爱生活的国企大摆烂程序员，又忍不住想做点什么躺不平的野心家，老吃家，游戏家，观影家</p>
+    <p>画像包含但不局限于以下:</p>
+    <ul>
+        {selfProfile.map((profile) => <li>{profile}</li>)}
+    </ul>
+    <p>一点规划</p>
+    <ul>
+        {plans.map((plan) => <li>{plan}</li>)}
+    </ul>
+    <p>早日实现财富自由，专注的聚焦人生愿景</p>
+    <p>本站随缘更新</p>
 </BaseLayout>

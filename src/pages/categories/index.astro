@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const allPosts = Object.values(import.meta.glob('../posts/*.md', { eager: true }));
+const categoryCounts: Record<string, number> = {};
+allPosts.forEach((post: any) => {
+  const cat = post.frontmatter.category || 'uncategorized';
+  categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+});
+const categories = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1]);
+const pageTitle = "Categories";
+---
+
+<BaseLayout pageTitle={pageTitle}>
+  <p style="color:var(--color-text-muted);">Browse posts by category — {categories.length} categories in total</p>
+  <div class="tags">
+    {categories.map(([cat, count]) => (
+      <a class="tag" href={`/categories/${cat}/`}>{cat} ({count})</a>
+    ))}
+  </div>
+</BaseLayout>

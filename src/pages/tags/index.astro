@@ -1,33 +1,17 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 const allPosts = Object.values(import.meta.glob('../posts/*.md', { eager: true }));
-const tags = [...new Set(allPosts.map((post: any) => post.frontmatter.tags).flat())];
-const pageTitle = "标签索引";
+const allTags = allPosts.map((post: any) => post.frontmatter.tags).flat();
+const tagCounts: Record<string, number> = {};
+allTags.forEach((tag: string) => { tagCounts[tag] = (tagCounts[tag] || 0) + 1; });
+const tags = [...new Set(allTags)].sort((a, b) => tagCounts[b] - tagCounts[a]);
+const pageTitle = "Tags";
 ---
 <BaseLayout pageTitle={pageTitle}>
+  <p style="color:var(--color-text-muted);">Browse posts by tag — {tags.length} tags in total</p>
   <div class="tags">
     {tags.map((tag) => (
-      <p class="tag"><a href={`/tags/${tag}`}>{tag}</a></p>
+      <a class="tag" href={`/tags/${tag}`}>{tag} ({tagCounts[tag]})</a>
     ))}
   </div>
 </BaseLayout>
-
-<style>
-  a {
-    color: #00539F;
-  }
-
-  .tags {
-    display: flex;
-    flex-wrap: wrap;
-  }
-
-  .tag {
-    margin: 0.25em;
-    border: dotted 1px #a1a1a1;
-    border-radius: .5em;
-    padding: .5em 1em;
-    font-size: 1.15em;
-    background-color: #F8FCFD;
-  }
-</style>
