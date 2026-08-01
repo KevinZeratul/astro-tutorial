@@ -17,7 +17,9 @@ const readingTime = estimateReadingTime(frontmatter.description);
       <span>·</span>
       <span>{readingTime} min read</span>
     </div>
-    <img src={frontmatter.image.url} width="300" alt={frontmatter.image.alt} />
+    {frontmatter.image && (
+      <img src={frontmatter.image.url} width="300" alt={frontmatter.image.alt} />
+    )}
 
     <div class="tags" style="margin:1rem 0;">
       {frontmatter.tags.map((tag: string) => (
